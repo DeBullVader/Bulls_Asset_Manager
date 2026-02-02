@@ -1,0 +1,28 @@
+{
+    "workbench.editor.enablePreview": false,
+    "git.ignoreLimitWarning": true,
+    "editor.semanticTokenColorCustomizations": {
+        "enabled": true
+    },
+    "python.analysis.typeCheckingMode":"off",
+
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportUndefinedVariable": "none",
+        "reportMissingImports": "none",
+        "reportGeneralTypeIssues": "none",
+        "reportInvalidTypeForm":"none"
+    },
+    "files.exclude": {
+        "**/*.pyc": {"when": "$(basename).py"},
+        "**/__pycache__": true
+    },
+    
+    "python.autoComplete.extraPaths": [
+        "C:\\Users\\arjan\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages"
+    ],
+    
+    "python.languageServer": "Pylance",
+    "python.REPL.enableREPLSmartSend": false,
+    "python.terminal.activateEnvironment": false,
+
+}
