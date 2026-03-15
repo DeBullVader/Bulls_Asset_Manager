@@ -22,6 +22,7 @@ import secrets
 import webbrowser
 import socket
 import json
+import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from datetime import datetime
@@ -31,6 +32,72 @@ from ..utils import addon_info
 from .marketplace_api import MarketplaceAPI
 
 import bpy.utils
+
+
+# ── File-based token persistence ──────────────────────────────────────────────
+# Blender addon preferences don't reliably survive module reloads during
+# development. We use a small JSON file in Blender's config dir as primary
+# storage, and keep preferences in sync for UI display.
+
+def _token_file_path() -> str:
+    config_dir = bpy.utils.user_resource('CONFIG')
+    return os.path.join(config_dir, 'polyassetvault_addon.json')
+
+
+def _save_token_to_file(device_token: str, expires_at: str, username: str, user_id: str):
+    try:
+        path = _token_file_path()
+        with open(path, 'w') as f:
+            json.dump({
+                'deviceToken': device_token,
+                'expiresAt': expires_at,
+                'username': username,
+                'userId': user_id,
+            }, f)
+        addon_logger.info(f"Token saved to file: {path}")
+    except Exception as e:
+        addon_logger.error(f"Failed to save token file: {e}")
+
+
+def _load_token_from_file() -> dict:
+    try:
+        path = _token_file_path()
+        if not os.path.exists(path):
+            return {}
+        with open(path, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        addon_logger.error(f"Failed to read token file: {e}")
+        return {}
+
+
+def _clear_token_file():
+    try:
+        path = _token_file_path()
+        if os.path.exists(path):
+            os.remove(path)
+    except Exception as e:
+        addon_logger.error(f"Failed to delete token file: {e}")
+
+
+def restore_token_from_file():
+    """
+    Called on addon register. Reads the token file and populates addon
+    preferences so is_logged_in() works correctly after a module reload.
+    """
+    data = _load_token_from_file()
+    if not data.get('deviceToken'):
+        print("[MARKETPLACE] No token file found — user needs to log in")
+        return
+    try:
+        prefs = addon_info.get_addon_prefs()
+        prefs.addon_device_token = data.get('deviceToken', '')
+        prefs.addon_token_expires = data.get('expiresAt', '')
+        prefs.addon_username = data.get('username', '')
+        prefs.addon_user_id = data.get('userId', '')
+        print(f"[MARKETPLACE] Token restored from file for user: {prefs.addon_username}")
+    except Exception as e:
+        addon_logger.error(f"Failed to restore token to prefs: {e}")
 
 
 # ── Shared auth state (written by server thread, read by modal operator) ──────
@@ -216,6 +283,12 @@ def exchange_and_save_token(jwt: str) -> tuple[bool, str]:
         prefs.addon_token_expires = data.get("expiresAt", "")
         prefs.addon_username = data.get("username", "")
         prefs.addon_user_id = str(data.get("userId", ""))
+        _save_token_to_file(
+            prefs.addon_device_token,
+            prefs.addon_token_expires,
+            prefs.addon_username,
+            prefs.addon_user_id,
+        )
         bpy.ops.wm.save_userpref()
 
         print(f"[MARKETPLACE] Logged in as: {prefs.addon_username}")
@@ -243,6 +316,7 @@ def logout() -> tuple[bool, str]:
         prefs.addon_token_expires = ""
         prefs.addon_username = ""
         prefs.addon_user_id = ""
+        _clear_token_file()
         bpy.ops.wm.save_userpref()
 
         addon_logger.info("Logged out of PolyAssetVault")
@@ -280,6 +354,7 @@ def clear_token_if_invalid(ok: bool, data: dict) -> bool:
             prefs.addon_token_expires = ""
             prefs.addon_username = ""
             prefs.addon_user_id = ""
+            _clear_token_file()
             bpy.ops.wm.save_userpref()
             addon_logger.info("Token cleared after server rejected it.")
         except Exception:
@@ -444,6 +519,7 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    restore_token_from_file()
 
 
 def unregister():
