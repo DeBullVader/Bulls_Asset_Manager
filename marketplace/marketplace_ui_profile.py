@@ -36,10 +36,13 @@ def _fetch_purchases():
     try:
         api = marketplace_auth.get_api()
         ok, data = api.get_purchases()
+        print(f"[MARKETPLACE] get_purchases response — ok={ok}, data={data}")
         marketplace_auth.clear_token_if_invalid(ok, data)
         if ok:
             # API may return {"purchases": [...]} or a bare list
             purchases = data.get("purchases", data if isinstance(data, list) else [])
+            if purchases:
+                print(f"[MARKETPLACE] First purchase entry: {purchases[0]}")
             _set_cache(loading=False, data=purchases, error=None)
         else:
             msg = data.get("message", "Failed to fetch purchases.")
