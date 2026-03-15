@@ -51,13 +51,18 @@ def _cache_token_in_session(prefs):
 
 
 def _restore_token_from_session():
+    """Restore token from session cache if prefs are empty (addon reload)."""
     cached = bpy.app.driver_namespace.get(_SESSION_KEY, {})
-    if not cached.get("deviceToken"):
-        return
     try:
         prefs = addon_info.get_addon_prefs()
         if prefs.addon_device_token:
-            return  # prefs already loaded (e.g. real Blender startup)
+            # Prefs already have a token (e.g. fresh Blender startup from userpref.blend).
+            # Cache it so future reloads within this session can restore it.
+            _cache_token_in_session(prefs)
+            print(f"[MARKETPLACE] Token cached from startup prefs for: {prefs.addon_username}")
+            return
+        if not cached.get("deviceToken"):
+            return
         prefs.addon_device_token = cached["deviceToken"]
         prefs.addon_token_expires = cached["expiresAt"]
         prefs.addon_username      = cached["username"]
