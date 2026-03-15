@@ -1,35 +1,35 @@
 import os
+import sys
 import logging
 from logging.handlers import RotatingFileHandler
 
-def setup_logger(name, log_file, level=logging.ERROR, max_size=1048576, backups=5):
-    """Sets up a rotating file logger.
+def setup_logger(name, log_file, level=logging.INFO, max_size=1048576, backups=5):
+    """Sets up a rotating file logger with a stdout stream handler.
 
     Args:
         name (str): Name of the logger.
         log_file (str): Path to the log file.
-        level (int, optional): Logging level. Defaults to logging.ERROR.
+        level (int, optional): Logging level. Defaults to logging.INFO.
         max_size (int, optional): Max size of log file in bytes. Defaults to 1048576 (1MB).
         backups (int, optional): Number of backup files to keep. Defaults to 5.
-    
+
     Returns:
         logging.Logger: Configured logger.
     """
-    # Create a logger
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
-    # Create a rotating file handler
-    handler = RotatingFileHandler(log_file, maxBytes=max_size, backupCount=backups)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
 
-    # Add the handler to the logger
-    logger.addHandler(handler)
+    # Rotating file handler
+    file_handler = RotatingFileHandler(log_file, maxBytes=max_size, backupCount=backups)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
 
-    # Add the levels to the logger
-    logger.setLevel(level)
-    logger.setLevel(logging.INFO)
+    # Stream handler → VSCode terminal (stdout)
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
     return logger
 
@@ -45,8 +45,6 @@ addon_logger = setup_logger('addon_logger', log_file_path)
 
 
 def unregister():
-    
-    addon_logger.handlers.clear()
-    for handler in addon_logger.handlers:
+    for handler in addon_logger.handlers[:]:
         handler.close()
-        addon_logger.handlers.remove(handler)
+        addon_logger.removeHandler(handler)
