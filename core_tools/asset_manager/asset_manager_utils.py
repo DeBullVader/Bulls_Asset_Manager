@@ -1,9 +1,8 @@
 import bpy,os
-from bpy.types import PropertyGroup,CollectionProperty
 from bpy.props import *
-from bpy.utils import register_classes_factory,register_class, unregister_class
+from bpy.utils import register_classes_factory
 from .asset_manager_hierarchy import build_hierarchy
-from... utils import addon_info,version_handler,asset_bbox_logic
+from ...utils import addon_info, version_handler
 
 class AssetOperations:
     exclude_list = []
@@ -88,29 +87,11 @@ def get_filter_asset_type(asset_type):
     return asset_types[asset_type]
 
 asset_types = [
-    # ("actions", "Actions", "Action", "ACTION", 2 ** 1),
     ("Objects", "Objects", "Object", "OBJECT_DATA", 2 ** 1),
     ("Materials", "Materials", "Materials", "MATERIAL", 2 ** 2),
-    # ("worlds", "Worlds", "Worlds", "WORLD", 2 ** 4),
     ("Material Nodes", "Material Nodes", "Material Node Groups", "NODE", 2 ** 3),
     ("Geometry Nodes", "Geometry Nodes", "Node Groups", "NODETREE", 2 ** 4),
     ("Collections", "Collections", "Collections", "OUTLINER_COLLECTION", 2 ** 5),
-    # ("hair_curves", "Hairs", "Hairs", "CURVES_DATA", 2 ** 7),
-    # ("brushes", "Brushes", "Brushes", "BRUSH_DATA", 2 ** 8),
-    # ("cache_files", "Cache Files", "Cache Files", "FILE_CACHE", 2 ** 9),
-    # ("linestyles", "Freestyle Linestyles", "", "LINE_DATA", 2 ** 10),
-    # ("images", "Images", "Images", "IMAGE_DATA", 2 ** 11),
-    # ("masks", "Masks", "Masks", "MOD_MASK", 2 ** 13),
-    # ("movieclips", "Movie Clips", "Movie Clips", "FILE_MOVIE", 2 **14),
-    # ("paint_curves", "Paint Curves", "Paint Curves", "CURVE_BEZCURVE", 2 ** 15),
-    # ("palettes", "Palettes", "Palettes", "COLOR", 2 ** 16),
-    # ("particles", "Particle Systems", "Particle Systems", "PARTICLES", 2 ** 17),
-    # ("scenes", "Scenes", "Scenes", "SCENE_DATA", 2 ** 18),
-    # ("sounds", "Sounds", "Sounds", "SOUND", 2 ** 19),
-    # ("Text", "Texts", "Texts", "TEXT", 2 ** 20),
-    # ("Texture", "Textures", "Textures", "TEXTURE_DATA", 2 ** 21),
-    # ("workspaces", "Workspaces", "Workspaces", "WORKSPACE", 2 ** 22),
-
     ]
 def get_types(*args, **kwargs):
     return asset_types
@@ -184,7 +165,7 @@ def setup_compositer_links(self,context):
     composite_node = nodes.get('Composite')
     ph_out = nodes.get('File_PH_Out')
 
-    render_logo =render_settings.enable_ub_logo
+    render_logo = render_settings.enable_logo
     logo_output = "Original" if render_logo else "No Logo Original"
     ph_logo_output = "Placeholder" if render_logo else "No Logo Placeholder"
     shaderball_render_selected = asset_props.render_types in ['Mat_Shaderball']
@@ -360,16 +341,6 @@ class AssetProperties(bpy.types.PropertyGroup):
     render_camera_rotation:FloatVectorProperty(name="Object Camera Rotation", default=(1.5312, 0.0, 0.0749),subtype='EULER', size=3)
 
 
-def update_preview_path(self,context):
-    addon_prefs = addon_info.get_addon_prefs()
-    if not addon_prefs.thumb_upload_path:
-        upload_dir =addon_info.get_upload_asset_library()
-        if upload_dir:
-            if os.path.isdir(upload_dir+'\\thumb'):
-                addon_prefs.thumb_upload_path = upload_dir+'\\thumb'
-                return
-
-
 def get_render_resolutions(*args, **kwargs):
     return [    
     ("128", "128","resolution 128x128","",2 ** 1),
@@ -385,8 +356,7 @@ class RenderSettings(bpy.types.PropertyGroup):
     background_color:FloatVectorProperty(name="Backdrop Color", default=(1.0,1.0,1.0,1.0),subtype='COLOR', size=4,soft_min=0.0, soft_max=1.0)
     emissive_strength:FloatProperty(name="Emissive Strength", default=1.4,soft_min=0.0, soft_max=2.0)
     background_transparent:BoolProperty(name="Background Transparent", default=False)
-    enable_ub_logo:BoolProperty(name="Enable UniBlend Logo", default=False)
-    thumb_upload_path:StringProperty(name="Preview Path", default="",subtype='FILE_PATH',update=update_preview_path)
+    enable_logo: BoolProperty(name="Enable BullTools Logo", default=False)
     floor_color:FloatVectorProperty(name="Floor Color", default=(0.0,0.0,0.0,1.0),subtype='COLOR', size=4,soft_min=0.0, soft_max=1.0)
     floor_height:FloatProperty(name="Floor height",description="Height of the floor", default=0.0,precision=3,subtype='DISTANCE',unit='LENGTH')
     floor_roughness:FloatProperty(name="Floor Roughness", default=0.2,soft_min=0.0, soft_max=1.0)

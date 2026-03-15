@@ -27,7 +27,6 @@ bl_info = {
     "category": "Tools",
 }
 
-from importlib import reload
 from . import addon_updater_ops
 from bpy.types import AddonPreferences
 from . import lib_preferences
@@ -91,15 +90,6 @@ class AllPrefs(
   bl_idname = __package__
 
 class BUProperties(bpy.types.PropertyGroup):
-  progress_total: bpy.props.FloatProperty(default=0, options={"HIDDEN"})  
-  progress_percent: bpy.props.IntProperty(
-      default=0, min=0, max=100, step=1, subtype="PERCENTAGE", options={"HIDDEN"}
-  )
-  progress_word: bpy.props.StringProperty(options={"HIDDEN"})  
-  progress_downloaded_text: bpy.props.StringProperty(options={"HIDDEN"})
-  assets_to_upload: bpy.props.IntProperty(default = 0, options={"HIDDEN"})
-  new_assets: bpy.props.IntProperty(default = 0, options={"HIDDEN"})
-  updated_assets: bpy.props.IntProperty(default = 0, options={"HIDDEN"})
   addon_name: bpy.props.StringProperty(options={"HIDDEN"})
 
 classes = (BUProperties,AllPrefs)
@@ -128,9 +118,6 @@ def register():
   bpy.context.preferences.use_preferences_save = True
 
 
-  addon_prefs =  bpy.context.preferences.addons[__package__].preferences
-
-    
 def unregister():
   addon_updater_ops.unregister()
   for cls in classes:

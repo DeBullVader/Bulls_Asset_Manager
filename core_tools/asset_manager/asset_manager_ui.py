@@ -95,7 +95,7 @@ class AssetManager_settings():
             col.prop(render_settings,"floor_metallic", text="Floor Metallic")
             col.prop(render_settings,"floor_roughness", text="Floor Roughness")
             col.prop(render_settings, "background_transparent", text='Transparent ',toggle=False)
-            col.prop(render_settings, "enable_ub_logo", text="Render with UniBlend Logo",toggle=False)
+            col.prop(render_settings, "enable_logo", text="Render with BullTools Logo", toggle=False)
         
 
 
@@ -112,24 +112,6 @@ class AssetManager_settings():
         row.scale_y = 1.25
         row.operator('ub.mark_assets', text="Mark all", icon='ASSET_MANAGER')
         row.operator('ub.unmark_assets', text="Unmark all", icon='CANCEL')
-
-    def mat_list(self,context,layout):
-        world = context.scene.world
-        layout = self.layout
-        # layout.template_preview(world)
-        # props = context.scene.extra_material_list
-        # layout.template_ID_preview("MATERIAL_UL_extra_material_list.material_list", "", bpy.data,'worlds', props, 'world_id', rows=len(bpy.data.worlds))
-
-        wNode = world.node_tree.nodes.active
-        if wNode.type == 'TEX_ENVIRONMENT':
-            layout.label(text=wNode.name, icon='TEXTURE')
-            layout.template_ID_preview(
-            wNode, "image",
-            new = "image.new",
-            open = "image.open",
-            rows = 4, cols = 6)
-            img = wNode.image
-
 
 def upload_settings(self, context,parent,addon_prefs):
     row = parent.row()
@@ -155,10 +137,6 @@ def upload_settings(self, context,parent,addon_prefs):
 
     else:
         col = parent.column()
-        td,tt =os.path.splitdrive(addon_prefs.thumb_path)
-        ld,lt =os.path.splitdrive(addon_prefs.lib_path)
-        
-        thumbs_path =os.path.relpath(addon_prefs.thumb_path,addon_prefs.lib_path) if td==ld else addon_prefs.thumb_path
         custom_path_text = 'Enable Custom Thumnail Path' if not addon_prefs.enable_custom_thumnail_path else ''
         custom_path_icon = 'OUTLINER_DATA_GP_LAYER' if not addon_prefs.enable_custom_thumnail_path else 'CANCEL'
         row = col.row(align=True)
@@ -184,7 +162,7 @@ class UB_PT_AssetManager_UIList(bpy.types.Panel,AssetManager_settings):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_parent_id = "UB_PT_AssetManager"
-    bl_category = "UniBlend"
+    bl_category = "BullTools"
     bl_options = {'DEFAULT_CLOSED','HIDE_HEADER'}
     
     bl_order = 1

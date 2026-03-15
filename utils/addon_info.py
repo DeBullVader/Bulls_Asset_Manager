@@ -1,51 +1,24 @@
 import bpy,os,shutil,addon_utils,textwrap
 from pathlib import Path
 from bpy.app.handlers import persistent
-from datetime import datetime, timezone
 from . import version_handler
 from .addon_logger import addon_logger
 
 
 # flags_enum = iter(range(1, 100, 1))
 asset_types = [
-    # ("actions", "Actions", "Action", "ACTION", 2 ** 1),
     ("Objects", "Objects", "Object", "OBJECT_DATA", 2 ** 1),
     ("Materials", "Materials", "Materials", "MATERIAL", 2 ** 2),
-    # ("worlds", "Worlds", "Worlds", "WORLD", 2 ** 4),
     ("Material Nodes", "Material Nodes", "Material Node Groups", "NODE", 2 ** 3),
     ("Geometry Nodes", "Geometry Nodes", "Node Groups", "NODETREE", 2 ** 4),
     ("Collections", "Collections", "Collections", "OUTLINER_COLLECTION", 2 ** 5),
-    # ("hair_curves", "Hairs", "Hairs", "CURVES_DATA", 2 ** 7),
-    # ("brushes", "Brushes", "Brushes", "BRUSH_DATA", 2 ** 8),
-    # ("cache_files", "Cache Files", "Cache Files", "FILE_CACHE", 2 ** 9),
-    # ("linestyles", "Freestyle Linestyles", "", "LINE_DATA", 2 ** 10),
-    # ("images", "Images", "Images", "IMAGE_DATA", 2 ** 11),
-    # ("masks", "Masks", "Masks", "MOD_MASK", 2 ** 13),
-    # ("movieclips", "Movie Clips", "Movie Clips", "FILE_MOVIE", 2 **14),
-    # ("paint_curves", "Paint Curves", "Paint Curves", "CURVE_BEZCURVE", 2 ** 15),
-    # ("palettes", "Palettes", "Palettes", "COLOR", 2 ** 16),
-    # ("particles", "Particle Systems", "Particle Systems", "PARTICLES", 2 ** 17),
-    # ("scenes", "Scenes", "Scenes", "SCENE_DATA", 2 ** 18),
-    # ("sounds", "Sounds", "Sounds", "SOUND", 2 ** 19),
-    # ("Text", "Texts", "Texts", "TEXT", 2 ** 20),
-    # ("Texture", "Textures", "Textures", "TEXTURE_DATA", 2 ** 21),
-    # ("workspaces", "Workspaces", "Workspaces", "WORKSPACE", 2 ** 22),
-
     ]
-# asset_types.sort(key=lambda t: t[0])
 
 previous_states = {}
 
 def get_types(*args, **kwargs):
     return asset_types
 
-def get_data_types():
-    return [
-        'objects',
-        'collections',
-        'node_groups',
-        'materials'
-    ]
 def get_bpy_data_types():
     data_types = {
         'OBJECT': bpy.data.objects,
@@ -117,7 +90,7 @@ def redraw(self, context,area_type):
 
 def get_addon_path():
     for mod in addon_utils.modules():
-        if mod.bl_info['name'] == 'UniBlend':
+        if mod.bl_info['name'] == 'bulltools_asset_manager':
             filepath = mod.__file__
             return os.path.dirname(os.path.realpath(filepath))
 
@@ -147,22 +120,6 @@ def get_addon_name():
 def get_addon_prefs():
     return get_addon_name().preferences
 
-def find_asset_by_name_placeholder(asset_name):
-    try:
-        datablock_types = [
-            bpy.data.objects,
-            bpy.data.materials,
-            bpy.data.collections,
-            bpy.data.node_groups,
-        ]
-        
-        for datablock in datablock_types:
-            if asset_name in datablock:
-                return (datablock[asset_name],datablock)
-        return None,None
-    except Exception as error_message:
-        print(f"An error occurred finding asset by name: {error_message}")
-
 def find_asset_by_name(asset_name):
     try:
         datablock_types = [
@@ -177,23 +134,6 @@ def find_asset_by_name(asset_name):
                 # print(f'asset {asset_name} found in file')
                 return (datablock[asset_name])
         return None
-    except Exception as error_message:
-        print(f"An error occurred finding asset by name: {error_message}")
-
-def find_premium_asset_by_name(asset_name):
-    try:
-        datablock_types = [
-            bpy.data.objects,
-            bpy.data.materials,
-            bpy.data.collections,
-            bpy.data.node_groups,
-        ]
-        
-        for datablock in datablock_types:
-            if asset_name in datablock:
-                # print(f'Premium asset {asset_name} found in file')
-                return (datablock[asset_name],datablock)
-        return None,None
     except Exception as error_message:
         print(f"An error occurred finding asset by name: {error_message}")
 
@@ -240,31 +180,6 @@ def get_layer_collection(collection):
 
     return scan_children(bpy.context.view_layer.layer_collection)
 
-def calculate_dynamic_chunk_size(file_size):
-    try:
-        addon_prefs = get_addon_name().preferences
-        file_size_mb = file_size / (1024 * 1024)
-        # If file size is less than 1 MB, download in one chunk
-        if file_size_mb <= 1:  # 1 MB
-            return min(file_size, addon_prefs.max_chunk_size * 1024)
-        # For files larger than 10 MB, use a larger chunk size (e.g., 5 MB)
-        if file_size_mb > 10:
-            larger_chunk_size = 5 * 1024 * 1024  # 5 MB
-
-            return larger_chunk_size
-        # Calculate chunk size based on percentage
-        percentage = addon_prefs.chunk_size_percentage / 100
-        calculated_size = file_size * percentage
-
-        # Adjust chunk size to be a multiple of 256 KB
-        chunk_size_256kb = 256 * 1024  # 256 KB in bytes
-        adjusted_chunk_size = (calculated_size + chunk_size_256kb - 1) // chunk_size_256kb * chunk_size_256kb
-        return adjusted_chunk_size
-    except Exception as error_message:
-        print('Error calculating chunk size:',error_message)
-    
-
-                
 def get_local_selected_assets(context):
     scr = bpy.context.screen
     for area in scr.areas:
@@ -286,29 +201,8 @@ def get_asset_browser_window_area(context):
         else:
             return None,None
 
-def convert_to_UTC_datetime(l_time,g_time):
-    l_datetime = datetime.fromtimestamp(l_time, tz=timezone.utc)
-    g_datetime = datetime.fromisoformat(g_time.replace('Z', '+00:00'))
-    return (l_datetime,g_datetime)
-
 def get_current_file_location():
     return bpy.data.filepath
-
-
-    
-def get_catalog_trick_uuid(path):   
-    
-    target_catalog = "Catalog"
-    if os.path.exists(path):
-        with open(file=path) as f:
-            for line in f.readlines():
-                if line.startswith(("#", "VERSION", "\n")):
-                    continue
-                # Each line contains : 'uuid:catalog_tree:catalog_name' + eol ('\n')
-                name = line.split(":")[2].split("\n")[0]
-                if target_catalog in name :
-                    uuid = line.split(":")[0]
-                    return uuid
 
 def get_author():
     author = get_addon_name().preferences.author

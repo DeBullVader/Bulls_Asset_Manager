@@ -1,6 +1,7 @@
 import bpy
+import os
 from bpy.utils import register_classes_factory
-from ..utils.addon_info import gitbook_link_getting_started
+from ..utils import addon_info
 
 class UB_PT_PreviewRenderScene(bpy.types.Panel):
     bl_idname = "VIEW3D_PT_BU_PREVIEWRENDEROPTIONS"
@@ -8,7 +9,7 @@ class UB_PT_PreviewRenderScene(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_parent_id = "VIEW3D_PT_BU_CORE_TOOLS"
-    bl_category = 'UniBlend'
+    bl_category = 'BullTools'
     bl_order = 2
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -50,7 +51,7 @@ class UB_OT_Append_Preview_Render_Scene(bpy.types.Operator):
     
     def execute(self, context):
         addon_path = addon_info.get_addon_path()
-        preview_render_file_path = os.path.join(addon_path,'BU_plugin_assets','blend_files','Preview_Rendering.blend')
+        preview_render_file_path = os.path.join(addon_path,'bulls_plugin_assets','blend_files','Preview_Rendering.blend')
         with bpy.data.libraries.load(preview_render_file_path) as (data_from, data_to):
             data_to.scenes = data_from.scenes
 
