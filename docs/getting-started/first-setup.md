@@ -18,15 +18,9 @@ In the same preferences panel, enter your name under **Author**. This will be us
 
 ---
 
-## 3. Append the Preview Render Scene
+## 3. Start Rendering
 
-The addon uses a dedicated render scene for generating previews.
-
-1. Open the **N-Panel → BullTools → Asset Manager**
-2. Click **Append Preview Scene**
-3. A new scene called `PreviewRenderScene` will be added to your file
-
-You're now ready to start rendering previews.
+That's all the setup needed. Select your assets in the viewport, open the **N-Panel → BullTools → Asset Manager**, and click **Render Previews**. The addon automatically handles the render scene — no manual setup required.
 
 ---
 
