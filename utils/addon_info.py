@@ -1,6 +1,4 @@
-import bpy,os,shutil,addon_utils,textwrap
-from pathlib import Path
-from bpy.app.handlers import persistent
+import bpy, os, addon_utils, textwrap
 from . import version_handler
 from .addon_logger import addon_logger
 
@@ -96,11 +94,7 @@ def get_addon_path():
 
 def get_plugin_assets_dir():
     addon_path = get_addon_path()
-    return os.path.join(addon_path,'BU_plugin_assets')
-
-def get_addon_blend_files_path():
-    addon_path = get_addon_path()
-    return os.path.join(addon_path,'BU_plugin_assets','blend_files')
+    return os.path.join(addon_path, 'bulls_plugin_assets')
 
 def get_path():
     return os.path.dirname(os.path.realpath(__file__))
