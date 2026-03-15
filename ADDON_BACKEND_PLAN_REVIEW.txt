@@ -1,0 +1,65 @@
+Review of: blender_addon_backend_integration_281a1d87.plan.md
+============================================================
+
+VERDICT: The plan is correct with one error and two clarifications on the optional items.
+
+
+── ERROR: Download endpoint method is wrong ─────────────────────────────────
+
+Section 5.4 and the route in addonRoutes.js both say:
+  POST /api/addon/products/:id/download
+
+This must be changed to:
+  GET /api/addon/products/:id/download
+
+Reason: the endpoint streams a file directly from disk. GET is the correct
+HTTP method for file downloads. The addon uses urllib.request.urlopen() which
+handles the streamed response. POST is wrong here.
+
+Affected locations in the plan:
+  - Section 1.4 (addonRoutes.js) — change router.post to router.get
+  - Section 5.4 response shapes table — change POST to GET
+  - Section 5.5 error table row for 503 — change POST to GET
+  - Section 6 testing checklist — change POST to GET
+
+
+── OPTIONAL / LATER — Section 4 ─────────────────────────────────────────────
+
+Item 1: Token cleanup cron — ADD IT NOW, do not defer.
+  It is 5 lines of code. Without it the AddonDevice collection grows forever
+  with expired and revoked tokens. There is no reason to leave it out.
+  Use the cron code from the spec as-is.
+
+Item 2: Product download fields (downloadUrl, downloadChecksum, downloadSize)
+  — SKIP ENTIRELY, not needed.
+  Since assets are stored on the local server, the download controller already
+  derives the file path from product.shortName:
+    {ASSETS_ROOT}/products/{shortName}/download.blend (or .zip)
+  No new fields on the Product schema are required. The only thing needed is
+  that uploaded files are stored in that folder structure on disk.
+  Ignore the optional Product.js schema block from the spec.
+
+
+── EVERYTHING ELSE IS CORRECT ───────────────────────────────────────────────
+
+The following are confirmed correct and require no changes:
+
+  - AddonDevice model and statics (issueToken, verifyToken)
+  - .populate('userId', '-password') — correct fix to exclude password hash
+  - protectAddon middleware — header name, error messages, lastUsedAt update
+  - Thumbnail derived from assets[] (isThumbnail: true, then first asset url)
+    returned as single thumbnail field — matches what the addon expects
+  - profileImage mapped from user.profilePictureUrl / user.profilePicture
+    — matches what the addon expects
+  - getDownloadUrl returning 503 until file storage is wired up — correct
+  - Route mount: app.use('/api/addon', addonRoutes) after gpuRoutes — correct
+  - Frontend /addon-login page: port validation 49152-65535, redirect to
+    http://localhost:{port}/callback?token=JWT&state=state — correct
+  - All exact error message strings in section 5.5 match the addon client:
+      "Addon device token required in X-Addon-Token header."
+      "Invalid addon device token."
+      "Addon device token has been revoked. Please log in again."
+      "Addon device token has expired. Please log in again."
+      "You do not own this product."
+      "Download not yet available for this product."
+  - No existing routes, auth, GPU, or other platform code is affected

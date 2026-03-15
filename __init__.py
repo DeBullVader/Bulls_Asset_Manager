@@ -38,6 +38,7 @@ from . import icons
 from . import utils
 from . import core_tools
 from . import BT_main_panels
+from . import marketplace
   
 @addon_updater_ops.make_annotations
 
@@ -100,7 +101,7 @@ packages=[
     BT_main_panels,
     icons,
     core_tools,
-
+    marketplace,
 ]
 
 def register():
