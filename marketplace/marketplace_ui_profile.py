@@ -122,11 +122,8 @@ class UB_PT_MarketplaceProfile(bpy.types.Panel):
         dl_active = is_downloading()
         col = layout.column(align=True)
         for purchase in purchases:
-            # API may nest the product under "product" key or return it flat
-            product = purchase.get("product", purchase)
-            # Mongoose adds a virtual 'id' field; fall back to '_id' if absent
-            product_id = str(product.get("id") or product.get("_id", ""))
-            product_name = product.get("name", product.get("title", product_id))
+            product_id = purchase.get("productId", "")
+            product_name = purchase.get("title", purchase.get("name", product_id))
 
             box = col.box()
             row = box.row(align=True)

@@ -41,8 +41,11 @@ def _fetch_products(search: str, category: str, page: int):
         ok, data = api.browse_products(search=search, category=category, page=page, limit=20)
         marketplace_auth.clear_token_if_invalid(ok, data)
         if ok:
+            print(f"[MARKETPLACE] browse_products response — ok={ok}, keys={list(data.keys()) if isinstance(data, dict) else 'list'}")
             products = data.get("products", data if isinstance(data, list) else [])
-            total_pages = data.get("totalPages", data.get("total_pages", 1))
+            if products:
+                print(f"[MARKETPLACE] First product entry: {products[0]}")
+            total_pages = data.get("totalPages", data.get("total_pages", data.get("pages", 1)))
             _set_cache(
                 loading=False,
                 data=products,
