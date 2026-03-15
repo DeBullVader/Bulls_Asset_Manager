@@ -64,15 +64,18 @@ class _CallbackHandler(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         """Handle CORS preflight — browser sends this before fetch() to localhost."""
+        print(f"[MARKETPLACE] CORS preflight OPTIONS received from {self.client_address}")
         self.send_response(200)
         self._add_cors_headers()
         self.send_header("Content-Length", "0")
         self.end_headers()
 
     def do_GET(self):
+        print(f"[MARKETPLACE] GET received: {self.path}")
         parsed = urlparse(self.path)
 
         if parsed.path != "/callback":
+            print(f"[MARKETPLACE] Ignored non-callback path: {parsed.path}")
             self._respond(404, "Not Found")
             return
 
@@ -81,14 +84,17 @@ class _CallbackHandler(BaseHTTPRequestHandler):
         state = params.get("state", [None])[0]
 
         expected_state = self.server.expected_state
+        print(f"[MARKETPLACE] Callback — token present: {bool(token)}, state match: {state == expected_state}")
 
         if not token or state != expected_state:
+            print(f"[MARKETPLACE] Callback rejected — state expected={expected_state!r} got={state!r}")
             self._respond(400, "Invalid callback — state mismatch or missing token.")
             _set_auth_state(error="Login failed: invalid callback received.")
             self._shutdown_later()
             return
 
         # Success — store JWT for the modal operator to pick up
+        print("[MARKETPLACE] Callback accepted — JWT stored, waiting for modal to exchange it")
         _set_auth_state(jwt=token, completed=False)
         self._respond(200, '{"ok":true}', content_type="application/json")
         self._shutdown_later()
@@ -146,20 +152,21 @@ def start_auth_flow() -> str | None:
         _server_instance = server
 
         def _serve():
-            addon_logger.info(f"OAuth callback server started on port {port}")
+            print(f"[MARKETPLACE] Callback server listening on 127.0.0.1:{port}")
             server.serve_forever()
-            addon_logger.info("OAuth callback server stopped")
+            print(f"[MARKETPLACE] Callback server stopped")
 
         t = threading.Thread(target=_serve, daemon=True)
         t.start()
 
         login_url = f"{base_url}/addon-login?state={state}&port={port}"
-        addon_logger.info(f"Opening browser for addon login: {login_url}")
+        print(f"[MARKETPLACE] Opening browser: {login_url}")
         webbrowser.open(login_url)
 
         return None
 
     except Exception as e:
+        print(f"[MARKETPLACE] ERROR starting auth flow: {e}")
         addon_logger.exception("Failed to start auth flow")
         return f"Could not start login: {e}"
 
@@ -195,10 +202,13 @@ def exchange_and_save_token(jwt: str) -> tuple[bool, str]:
             "platform": platform.system(),
         }
 
+        print(f"[MARKETPLACE] Exchanging JWT for device token at {prefs.marketplace_api_url}")
         ok, data = api.exchange_jwt_for_device_token(jwt, meta)
+        print(f"[MARKETPLACE] Token exchange response — ok={ok}, data={data}")
 
         if not ok:
             msg = data.get("message", "Unknown error during token exchange.")
+            print(f"[MARKETPLACE] Token exchange FAILED: {msg}")
             addon_logger.error(f"Token exchange failed: {msg}")
             return False, msg
 
@@ -208,10 +218,12 @@ def exchange_and_save_token(jwt: str) -> tuple[bool, str]:
         prefs.addon_user_id = str(data.get("userId", ""))
         bpy.ops.wm.save_userpref()
 
+        print(f"[MARKETPLACE] Logged in as: {prefs.addon_username}")
         addon_logger.info(f"Logged in as {prefs.addon_username}")
         return True, ""
 
     except Exception as e:
+        print(f"[MARKETPLACE] EXCEPTION in exchange_and_save_token: {e}")
         addon_logger.exception("Unexpected error exchanging token")
         return False, str(e)
 
@@ -352,6 +364,7 @@ class UB_OT_MarketplaceLogin(bpy.types.Operator):
 
         # Server received the callback and stored a JWT
         if "jwt" in state and not state.get("completed"):
+            print("[MARKETPLACE] Modal picked up JWT — starting token exchange")
             jwt = state["jwt"]
             _set_auth_state(completed=True)   # prevent double-processing
             ok, err = exchange_and_save_token(jwt)
@@ -366,6 +379,7 @@ class UB_OT_MarketplaceLogin(bpy.types.Operator):
                 return {'CANCELLED'}
 
         if state.get("error"):
+            print(f"[MARKETPLACE] Modal got error state: {state['error']}")
             self._finish(context)
             self.report({'ERROR'}, state["error"])
             return {'CANCELLED'}
