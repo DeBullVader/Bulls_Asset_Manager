@@ -62,6 +62,13 @@ _server_instance: HTTPServer | None = None
 
 class _CallbackHandler(BaseHTTPRequestHandler):
 
+    def do_OPTIONS(self):
+        """Handle CORS preflight — browser sends this before fetch() to localhost."""
+        self.send_response(200)
+        self._add_cors_headers()
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def do_GET(self):
         parsed = urlparse(self.path)
 
@@ -81,23 +88,23 @@ class _CallbackHandler(BaseHTTPRequestHandler):
             self._shutdown_later()
             return
 
-        # Success page shown in the browser
-        self._respond(200, (
-            "<html><body style='font-family:sans-serif;text-align:center;margin-top:80px'>"
-            "<h2>✓ Logged in successfully!</h2>"
-            "<p>You can close this tab and return to Blender.</p>"
-            "</body></html>"
-        ), content_type="text/html")
-
-        # Store JWT for the modal operator to pick up
+        # Success — store JWT for the modal operator to pick up
         _set_auth_state(jwt=token, completed=False)
+        self._respond(200, '{"ok":true}', content_type="application/json")
         self._shutdown_later()
+
+    def _add_cors_headers(self):
+        """Allow the marketplace website to call our local callback server."""
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
 
     def _respond(self, code: int, body: str, content_type: str = "text/plain"):
         encoded = body.encode()
         self.send_response(code)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(encoded)))
+        self._add_cors_headers()
         self.end_headers()
         self.wfile.write(encoded)
 
@@ -106,7 +113,7 @@ class _CallbackHandler(BaseHTTPRequestHandler):
         t.start()
 
     def log_message(self, format, *args):
-        pass  # Suppress default HTTP server logging
+        addon_logger.debug(f"OAuth callback: {format % args}")
 
 
 def _find_free_port() -> int:
