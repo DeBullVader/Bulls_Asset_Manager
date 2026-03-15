@@ -147,12 +147,15 @@ class UB_PT_MarketplaceBrowse(bpy.types.Panel):
             dl_active = is_downloading()
             col = layout.column(align=True)
             for product in products:
-                product_id = str(product.get("id", ""))
+                # Mongoose adds a virtual 'id' field; fall back to '_id' if absent
+                product_id = str(product.get("id") or product.get("_id", ""))
                 product_name = product.get("name", product.get("title", product_id))
+                owned = product.get("owned", False)
 
                 box = col.box()
                 row = box.row(align=True)
-                row.label(text=product_name, icon='ASSET_MANAGER')
+                icon = 'CHECKMARK' if owned else 'ASSET_MANAGER'
+                row.label(text=product_name, icon=icon)
                 dl_op = row.operator(
                     "ub.marketplace_download",
                     text="",
@@ -160,8 +163,8 @@ class UB_PT_MarketplaceBrowse(bpy.types.Panel):
                 )
                 dl_op.product_id = product_id
                 dl_op.product_name = product_name
-                if dl_active:
-                    row.enabled = False
+                # Only allow download for owned products; disable if another is in progress
+                row.enabled = owned and not dl_active
 
         # ── Pagination ─────────────────────────────────────────────────────
         page = cache.get("page", 1)

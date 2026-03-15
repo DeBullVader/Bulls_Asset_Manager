@@ -63,7 +63,7 @@ class UB_OT_MarketplaceRefreshPurchases(bpy.types.Operator):
     bl_options = {'REGISTER'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, _context):
         return marketplace_auth.is_logged_in()
 
     def execute(self, context):
@@ -85,10 +85,10 @@ class UB_PT_MarketplaceProfile(bpy.types.Panel):
     bl_order = 1
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, _context):
         return marketplace_auth.is_logged_in()
 
-    def draw(self, context):
+    def draw(self, _context):
         layout = self.layout
         cache = get_purchases_cache()
 
@@ -121,7 +121,8 @@ class UB_PT_MarketplaceProfile(bpy.types.Panel):
         for purchase in purchases:
             # API may nest the product under "product" key or return it flat
             product = purchase.get("product", purchase)
-            product_id = str(product.get("id", ""))
+            # Mongoose adds a virtual 'id' field; fall back to '_id' if absent
+            product_id = str(product.get("id") or product.get("_id", ""))
             product_name = product.get("name", product.get("title", product_id))
 
             box = col.box()
