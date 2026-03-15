@@ -53,7 +53,6 @@ class AssetManager_settings():
         col = layout.column(align=False)
         
         col.prop(asset_props,'exclude_extras',text='Exclude Extras')
-        col.prop(asset_props, "use_asset_example_rotation", text="Use preview asset rotation")
         col.separator(factor=1)
         col.prop(asset_props,'debug',text='Debug Preview Render',toggle=True)
 
@@ -95,7 +94,6 @@ class AssetManager_settings():
             col.prop(render_settings,"floor_metallic", text="Floor Metallic")
             col.prop(render_settings,"floor_roughness", text="Floor Roughness")
             col.prop(render_settings, "background_transparent", text='Transparent ',toggle=False)
-            col.prop(render_settings, "enable_logo", text="Render with BullTools Logo", toggle=False)
         
 
 

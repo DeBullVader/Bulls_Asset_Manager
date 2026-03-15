@@ -179,9 +179,7 @@ class GeometryNodeRenderStrategy():
         asset_to_render = self.render_scene['Object_Container'].objects.get(asset_copy.name)
         asset_to_render.hide_render = False
 
-def set_asset_and_cam_rotation(context,asset_props, asset):
-    if asset_props.use_asset_example_rotation:
-        asset.rotation_euler = asset_props.asset_example_rotation
+def set_asset_and_cam_rotation(context, asset_props, _asset):
     context.scene.camera.rotation_euler = asset_props.render_camera_rotation
 
 def get_render_object(self, context):

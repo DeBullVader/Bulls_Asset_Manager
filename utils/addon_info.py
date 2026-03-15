@@ -282,7 +282,7 @@ def get_addon_blend_files_path():
     addon_path = get_addon_path()
     return os.path.join(addon_path,'bulls_plugin_assets','blend_files')
 
-GITBOOKURL ='https://blenderuniverse.gitbook.io/blender-universe/getting-started/'
+GITBOOKURL = 'https://bulltools.gitbook.io/bulltools-docs/'
 
 class BU_OT_url_open(bpy.types.Operator):
     """More Information"""

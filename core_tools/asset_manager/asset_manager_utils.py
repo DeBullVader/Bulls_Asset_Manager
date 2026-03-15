@@ -151,40 +151,31 @@ def set_render_settings(self,context):
     render_scene.render.resolution_y = context.scene.render.resolution_y
     render_scene.use_nodes = True
     
-def setup_compositer_links(self,context): 
-    asset_props = context.scene.asset_props
-    render_settings=context.scene.render_settings
-    asset_types = asset_props.asset_types
+def setup_compositer_links(self, _context):
+    render_scene = self.render_scene
+    node_tree = render_scene.node_tree
+    nodes = node_tree.nodes
+    links = node_tree.links
 
-    render_scene = self.render_scene 
-    nodes = render_scene.node_tree.nodes
-    links = render_scene.node_tree.links
-    link = links.new
+    # Clear all existing compositor links so broken Logo/Placeholder nodes don't cause black output
+    links.clear()
 
-    logo_setup_node = nodes.get('Logo_Setup')
-    composite_node = nodes.get('Composite')
-    ph_out = nodes.get('File_PH_Out')
+    render_layers = next((n for n in nodes if n.type == 'R_LAYERS'), None)
+    composite = next((n for n in nodes if n.type == 'COMPOSITE'), None)
 
-    render_logo = render_settings.enable_logo
-    logo_output = "Original" if render_logo else "No Logo Original"
-    ph_logo_output = "Placeholder" if render_logo else "No Logo Placeholder"
-    shaderball_render_selected = asset_props.render_types in ['Mat_Shaderball']
+    if not render_layers:
+        render_layers = nodes.new('CompositorNodeRLayers')
+    if not composite:
+        composite = nodes.new('CompositorNodeComposite')
 
-    if asset_types in ['Materials','Material Nodes']:
-        logo_output = "Original" if not shaderball_render_selected else "No Logo Original"
-        ph_logo_output = "Placeholder" if not shaderball_render_selected else "No Logo Placeholder"
-        link(logo_setup_node.outputs[logo_output], composite_node.inputs["Image"])
-        link(logo_setup_node.outputs[ph_logo_output], ph_out.inputs["Image"])
-    else:
-        link(logo_setup_node.outputs[logo_output], composite_node.inputs["Image"])    
-        link(logo_setup_node.outputs[ph_logo_output], ph_out.inputs["Image"])
+    links.new(render_layers.outputs["Image"], composite.inputs["Image"])
 
 
 
 
 def import_render_scene(context):
     addon_path = addon_info.get_addon_path()
-    preview_render_file_path = os.path.join(addon_path,'BU_plugin_assets','blend_files','Preview_Rendering.blend')
+    preview_render_file_path = os.path.join(addon_path,'bulls_plugin_assets','blend_files','Preview_Rendering.blend')
     remove_preview_render_scene()
         
     with bpy.data.libraries.load(preview_render_file_path) as (data_from, data_to):
@@ -336,8 +327,6 @@ class AssetProperties(bpy.types.PropertyGroup):
     is_rendering:BoolProperty(default=False)
     debug:BoolProperty(default=False, description='Show debug visuals in the preview render (bounds and center point)')
     adjust_camera:BoolProperty(name="Adjust Camera", default=False)
-    use_asset_example_rotation:BoolProperty(name="Use Asset Example Rotation", default=False,description="Use the Preview asset rotation for rendering")
-    asset_example_rotation:FloatVectorProperty(name="Asset Example Rotation", default=(0.0, 0.0, 0.0),subtype='EULER', size=3)
     render_camera_rotation:FloatVectorProperty(name="Object Camera Rotation", default=(1.5312, 0.0, 0.0749),subtype='EULER', size=3)
 
 
@@ -356,7 +345,6 @@ class RenderSettings(bpy.types.PropertyGroup):
     background_color:FloatVectorProperty(name="Backdrop Color", default=(1.0,1.0,1.0,1.0),subtype='COLOR', size=4,soft_min=0.0, soft_max=1.0)
     emissive_strength:FloatProperty(name="Emissive Strength", default=1.4,soft_min=0.0, soft_max=2.0)
     background_transparent:BoolProperty(name="Background Transparent", default=False)
-    enable_logo: BoolProperty(name="Enable BullTools Logo", default=False)
     floor_color:FloatVectorProperty(name="Floor Color", default=(0.0,0.0,0.0,1.0),subtype='COLOR', size=4,soft_min=0.0, soft_max=1.0)
     floor_height:FloatProperty(name="Floor height",description="Height of the floor", default=0.0,precision=3,subtype='DISTANCE',unit='LENGTH')
     floor_roughness:FloatProperty(name="Floor Roughness", default=0.2,soft_min=0.0, soft_max=1.0)
