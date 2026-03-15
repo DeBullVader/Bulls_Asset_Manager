@@ -386,14 +386,9 @@ def ensure_thumbnail_folder_exists(addon_prefs,upload_path):
 def get_asset_preview_path():
     addon_prefs = get_addon_name().preferences
     if os.path.exists(addon_prefs.thumb_path):
-        ph_preview_dir = os.path.join(addon_prefs.thumb_path, 'Placeholder_Previews')
-        if not os.path.exists(ph_preview_dir):
-            os.mkdir(ph_preview_dir)
-    return addon_prefs.thumb_path
+        return addon_prefs.thumb_path
 
-def get_placeholder_asset_preview_path():
-    asset_preview_path = get_asset_preview_path()
-    return os.path.join(asset_preview_path, 'Placeholder_Previews')
+
 
 def get_addon_blend_files_path():
     addon_path = get_addon_path()

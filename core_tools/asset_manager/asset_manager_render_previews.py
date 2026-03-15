@@ -28,9 +28,9 @@ class UB_OT_Pivot_Bottom_Center(bpy.types.Operator):
             bpy.context.scene.cursor.location.xyz = cursor_original_loc
         return {'FINISHED'}
 
-
 class UB_Preview_Defaults():
-    def __init__(self):
+
+    def setup_defaults(self):
         self.asset_props = bpy.context.scene.asset_props
         self.preview_col = self.get_or_create('collections','UB_Preview_Col')
         self.cam =self.get_or_create('cameras', 'UB_Preview_Camera')
@@ -42,7 +42,7 @@ class UB_Preview_Defaults():
             self.original_camera_name = ''
         self.asset_example = None
         self.original_scene_res = (bpy.context.scene.render.resolution_x,bpy.context.scene.render.resolution_y,0)
-    
+        
     def get_or_create(self,data_type, name, *args, **kwargs):
         data_collection = getattr(bpy.data, data_type)
         item = data_collection.get(name)
@@ -78,7 +78,7 @@ class UB_OT_AdjustPreviewCamera(bpy.types.Operator,UB_Preview_Defaults):
     
         
     def invoke(self,context,event):
-        super().__init__()
+        self.setup_defaults()
         return self.execute(context)
 
     def create_asset_example(self):
@@ -100,29 +100,29 @@ class UB_OT_AdjustPreviewCamera(bpy.types.Operator,UB_Preview_Defaults):
         selected_assets =self.asset_props.selected
         if self.toggled:
             if selected_assets:
-                for item in selected_assets:
-                    item.asset.select_set(False)
+            #     for item in selected_assets:
+            #         item.asset.select_set(False)
                 if self.render_camera.name in self.preview_col.objects:
                     self.render_camera.select_set(True)
-                if self.asset_example.name in self.preview_col.objects:
-                    self.asset_example.select_set(True)
+            #     if self.asset_example.name in self.preview_col.objects:
+            #         self.asset_example.select_set(True)
             bpy.ops.view3d.localview()
             align_camera_to_selected_asset(self.render_camera)
             self.render_camera.select_set(False)
             
-            self.asset_example.select_set(False)
+            # self.asset_example.select_set(False)
             area = next(area for area in context.screen.areas if area.type == 'VIEW_3D')
             area.spaces[0].region_3d.view_perspective = 'CAMERA'
             area.spaces[0].lock_camera = True
             
         else:
             bpy.ops.view3d.localview()
-            bpy.ops.object.select_all(action='DESELECT')
-            if selected_assets:
-                for item in selected_assets:
-                    item.asset.select_set(True)
-                    if self.active_asset_name != '' and item.asset.name == self.active_asset_name:
-                        context.view_layer.objects.active = item.asset          
+            # bpy.ops.object.select_all(action='DESELECT')
+            # if selected_assets:
+            #     for item in selected_assets:
+            #         item.asset.select_set(True)
+            #         if self.active_asset_name != '' and item.asset.name == self.active_asset_name:
+            #             context.view_layer.objects.active = item.asset          
             area = next(area for area in context.screen.areas if area.type == 'VIEW_3D')
             area.spaces[0].region_3d.view_perspective = 'PERSP'
             area.spaces[0].lock_camera = False
@@ -134,7 +134,7 @@ class UB_OT_AdjustPreviewCamera(bpy.types.Operator,UB_Preview_Defaults):
                 for obj in self.preview_col.objects:
                     bpy.data.objects.remove(obj,do_unlink=True)
             bpy.data.collections.remove(self.preview_col, do_unlink=True)
-        self.asset_props.selected.clear()
+        # self.asset_props.selected.clear()
         original_camera = bpy.data.objects.get(self.original_camera_name)
         if original_camera:
             context.scene.camera = original_camera
@@ -148,9 +148,9 @@ class UB_OT_AdjustPreviewCamera(bpy.types.Operator,UB_Preview_Defaults):
             context.scene.collection.children.link(self.preview_col)
         if not self.render_camera.name not in self.preview_col.objects:
             self.preview_col.objects.link(self.render_camera)
-        self.asset_example.users_collection[0].objects.unlink(self.asset_example)
-        if self.asset_example.name not in self.preview_col.objects:
-            self.preview_col.objects.link(self.asset_example)
+        # self.asset_example.users_collection[0].objects.unlink(self.asset_example)
+        # if self.asset_example.name not in self.preview_col.objects:
+        #     self.preview_col.objects.link(self.asset_example)
         context.scene.camera = self.render_camera
         self.render_camera.rotation_euler = self.asset_props.render_camera_rotation
         
@@ -168,20 +168,20 @@ class UB_OT_AdjustPreviewCamera(bpy.types.Operator,UB_Preview_Defaults):
                     if asset.name not in asset_names:
                         add_selected =self.asset_props.selected.add()
                         add_selected.asset = asset
-            self.create_asset_example()
+            # self.create_asset_example()
             self.setup_adjustment_objects(context)            
-            print(f'resolution: {render_settings.render_resolution}')
-            context.scene.render.resolution_x = render_settings.render_resolution
-            context.scene.render.resolution_y = render_settings.render_resolution
+            print(f'resolution: {int(render_settings.render_resolution)}')
+            context.scene.render.resolution_x = int(render_settings.render_resolution)
+            context.scene.render.resolution_y = int(render_settings.render_resolution)
             self.toggled = True
             self.asset_props.adjust_camera = True
             self.isolate_selected(context)
         else:
             self.toggled = False
-            self.create_asset_example()
+            # self.create_asset_example()
             self.asset_props.render_camera_rotation = self.render_camera.rotation_euler
-            if self.asset_example:
-                self.asset_props.asset_example_rotation = self.asset_example.rotation_euler
+            # if self.asset_example:
+            #     self.asset_props.asset_example_rotation = self.asset_example.rotation_euler
             if self.preview_col:
                 self.isolate_selected(context)
                 self.cleanup_current_scene(context)
@@ -218,7 +218,7 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
     
     def invoke(self, context, event):
         # print("Invoke Render Previews")
-        super().__init__()
+        self.setup_defaults()
         self.state = 'INIT'
         self._timer = None
         
@@ -227,7 +227,6 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
         self.preview_filenames = []
         self.assets_to_render = []
         self.asset_preview_path = addon_info.get_asset_preview_path()
-        self.ph_asset_preview_path = addon_info.get_placeholder_asset_preview_path()
         self.setup_scenes(context)
         self.prepare_assets_for_render(context)
         self.setup_render_handlers(context)
@@ -237,7 +236,6 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
         self.rendering = True
         
     def post(self, scene='PreviewRenderScene', context=None):
-        self.remove_ph_padding()
         asset = self.render_scene['Object_Container'].objects.get(self.assets_to_render[0].name+'_to_render')
         if asset:
             # asset.hide_render = True
@@ -265,10 +263,9 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
             raise Exception('Preview Render Scene not found')
 
         #adjust current scene temporarily for the render process
-        print(f'resolution: {render_settings.render_resolution}')
+        # print(f'resolution: {render_settings.render_resolution}')
         context.scene.render.resolution_x = int(render_settings.render_resolution)
         context.scene.render.resolution_y = int(render_settings.render_resolution)
-        
         self.setup_cameras(context)
         self.adjust_floor(context)
 
@@ -310,7 +307,7 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
         # print('prepare_assets_for_render')
         selected_assets = get_selected_assets()
         for asset in selected_assets:
-            add_selected = self.asset_props.selected.add()
+            add_selected = context.scene.asset_props.selected.add()
             add_selected.asset = asset
             asset.select_set(False)
         asset_type = context.scene.asset_props.asset_types
@@ -321,27 +318,31 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
             self.get_assets_to_render_from_hierarchy(context,filtered_hierarchy,asset_type)
 
     def get_assets_to_render_from_hierarchy(self, context,hierarchy, asset_type):
+        render_settings = context.scene.render_settings
+        res = int(render_settings.render_resolution)
         for item in hierarchy:
             if item and hasattr(item, 'asset') and item.asset:
                 if item.asset_type == asset_type and not item.children:
                     if not AssetOperations.is_excluded(item.asset):
                         if item.asset_type == 'Material Nodes':
-                            self.preview_filenames.append(f'preview_{item.asset.node_tree.name}.png')
+                            self.preview_filenames.append(f'preview_{item.asset.node_tree.name}_{res}.png')
                         else:
-                            self.preview_filenames.append(f'preview_{item.asset.name}.png')
+                            self.preview_filenames.append(f'preview_{item.asset.name}_{res}.png')
                         self.assets_to_render.append(item.asset)
                 if hasattr(item, 'children') and item.children:
                     self.get_assets_to_render_from_hierarchy(context, item.children, asset_type)
                 
 
     def get_geo_assets_to_render_from_hierarchy(self, context,hierarchy, asset_type):
+        render_settings = context.scene.render_settings
+        res = int(render_settings.render_resolution)
         for item in hierarchy:
             if item and hasattr(item, 'asset') and item.asset:
                 if item.asset_type == 'Objects':
                     for modifier in item.asset.modifiers:
                         if modifier.type == 'NODES':
                             if not AssetOperations.is_excluded(modifier.node_group):
-                                self.preview_filenames.append(f'preview_{modifier.node_group.name}.png')
+                                self.preview_filenames.append(f'preview_{modifier.node_group.name}_{res}.png')
                                 self.assets_to_render.append(item.asset)
      
 
@@ -398,6 +399,7 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
         # Clear selected assets, Restore original render resolution
         context.scene.asset_props.selected.clear()
         context.scene.asset_props.rendered_assets.clear()
+        # TODO: was below removed?
         context.scene.render.resolution_x = self.original_scene_res[0]
         context.scene.render.resolution_y = self.original_scene_res[1]
         
@@ -409,23 +411,7 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
         if 'PreviewRenderScene' in bpy.data.scenes:
             self.render_scene['Center_Point'].hide_render = False if context.scene.asset_props.debug else True
             self.render_scene['Preview_Scale_Range'].hide_render = False if context.scene.asset_props.debug else True
-    
-    def set_ph_asset_path(self):
-        nodes = self.render_scene.node_tree.nodes
-        self.render_scene.frame_current = 0
-        ph_out = nodes.get('File_PH_Out')
-        asset_name =self.preview_filenames[0].removesuffix('.png')
-        ph_filepath =  os.path.join(self.ph_asset_preview_path,'PH_' + asset_name + '.png')
-        if os.path.exists(ph_filepath):
-            os.remove(ph_filepath)
-        ph_out.file_slots[0].path = os.path.join(self.ph_asset_preview_path,'PH_' + asset_name + '#.png')
 
-    def remove_ph_padding(self):
-        asset_name =self.preview_filenames[0].removesuffix('.png')
-        padded_path = os.path.join(self.ph_asset_preview_path,'PH_' + asset_name + '1.png')
-        correct_name = 'PH_' + asset_name + '.png'
-        if os.path.exists(padded_path):
-           os.rename(padded_path,os.path.join(os.path.join(self.ph_asset_preview_path,correct_name)))
 
     def render_next_asset(self, context):
         try:
@@ -459,7 +445,6 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
             
             asset_bbox_logic.restore_pivot_transform(current_pivot_transform)
 
-            self.set_ph_asset_path()
             self.render_scene.render.filepath = os.path.join(self.asset_preview_path,self.preview_filenames[0])
             bpy.ops.render.render(scene='PreviewRenderScene', write_still=True, use_viewport=True)
         # TODO: Add exception handling for failed renders, use exceptions where needed not everywhere
@@ -491,7 +476,7 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
                 if self.state == 'FINISHED':
                     print('Finished Render Previews')
                     self.cleanup_render_process(context)
-                    self.asset_props.is_rendering = False
+                    context.scene.asset_props.is_rendering = False
                     return {"FINISHED"}
                 
                 elif self.state == 'RENDERING':
@@ -499,7 +484,7 @@ class UB_OT_RenderPreviews(bpy.types.Operator,UB_Preview_Defaults):
                     if True in (not self.preview_filenames, self.stop is True):
                         self.cleanup_render_process(context)
                         self.state = 'FINISHED'
-                        self.asset_props.is_rendering = False
+                        context.scene.asset_props.is_rendering = False
                         return {"FINISHED"}
                     elif not self.rendering:
                         self.render_next_asset(context)

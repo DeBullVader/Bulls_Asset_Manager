@@ -33,7 +33,7 @@ class UB_PT_PreviewRenderScene(bpy.types.Panel):
         window = context.window
         row.template_ID(window, "scene", new="scene.new",unlink="scene.delete")
         mainrow.alignment = 'RIGHT'
-        gitbook_link_getting_started(mainrow,'mark-asset-tools/preview-render-scene','')
+        # gitbook_link_getting_started(mainrow,'mark-asset-tools/preview-render-scene','')
 
 class UB_OT_Append_Preview_Render_Scene(bpy.types.Operator):
     '''Append preview render scene to current file'''

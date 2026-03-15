@@ -166,8 +166,8 @@ def set_render_settings(self,context):
     render_scene.render.film_transparent = context.scene.render_settings.background_transparent
     render_scene.render.image_settings.color_mode = 'RGBA'
     render_scene.render.image_settings.file_format = 'PNG'
-    render_scene.render.resolution_x = 512  
-    render_scene.render.resolution_y = 512
+    render_scene.render.resolution_x = context.scene.render.resolution_x  
+    render_scene.render.resolution_y = context.scene.render.resolution_y
     render_scene.use_nodes = True
     
 def setup_compositer_links(self,context): 
@@ -260,9 +260,7 @@ def ui_asset_data(layout,asset_type,asset,selected_asset_type):
 
     def has_previews(asset):
         asset_preview_dir = addon_info.get_asset_preview_path()
-        ph_asset_preview_path = addon_info.get_placeholder_asset_preview_path()
-        path =os.path.join(asset_preview_dir,f'preview_{asset.name}.png')
-        ph_path =os.path.join(ph_asset_preview_path,f'PH_preview_{asset.name}.png')
+        path =os.path.join(str(asset_preview_dir),f'preview_{asset.name}.png')
         if os.path.exists(path):
             return 'IMAGE_RGB_ALPHA'
         else:
@@ -320,9 +318,8 @@ def pack_images(material):
 def has_previews(asset):
     # Iterate through asset's material slots and add them to mats
     asset_preview_dir = addon_info.get_asset_preview_path()
-    ph_asset_preview_path = addon_info.get_placeholder_asset_preview_path()
     path = f'{asset_preview_dir}{os.sep}preview_{asset.name}.png'
-    ph_path = f'{ph_asset_preview_path}{os.sep}PH_preview_{asset.name}.png'
+   
     # if os.path.exists(path) and os.path.exists(ph_path):
     if os.path.exists(path):
         return 'IMAGE_RGB_ALPHA'

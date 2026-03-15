@@ -982,7 +982,7 @@ def update_settings_ui(self, context, element=None):
     row = box.row()
     row.label(text="Updater Settings")
     # row.scale_x=0.4
-    addon_info.gitbook_link_getting_started(row,'add-on-settings-initial-setup/add-on-updater','')
+    # addon_info.gitbook_link_getting_started(row,'add-on-settings-initial-setup/add-on-updater','')
     row = box.row()
 
     # special case to tell user to restart blender, if set that way
@@ -1390,12 +1390,12 @@ def register(bl_info):
 
     # Choose your own repository, must match git name for GitHUb and Bitbucket,
     # for GitLab use project ID (numbers only).
-    updater.repo = "BU_Blender_AssetLibrary_Plugin"
+    updater.repo = "Bulls_Asset_Manager"
 
     # updater.addon = # define at top of module, MUST be done first
 
     # Website for manual addon download, optional but recommended to set.
-    updater.website = "https://github.com/DeBullVader/BU_Blender_AssetLibrary_Plugin/"
+    updater.website = "https://github.com/DeBullVader/Bulls_Asset_Manager/"
 
     # Addon subfolder path.
     # "sample/path/to/addon"

@@ -134,7 +134,7 @@ class AssetManager_settings():
 def upload_settings(self, context,parent,addon_prefs):
     row = parent.row()
     row.label(text = 'Upload settings: ')
-    addon_info.gitbook_link_getting_started(row,'tools-panel/library-manager#upload-settings','')
+    # addon_info.gitbook_link_getting_started(row,'tools-panel/library-manager#upload-settings','')
     row = parent.row()
     row.use_property_split = True
     row.use_property_decorate = False
@@ -148,8 +148,11 @@ def upload_settings(self, context,parent,addon_prefs):
     if not addon_prefs.lib_path:
         row = parent.row()
         row.label(text='No Library path has been set')
+        row = parent.row()
         row.label(text='Please set a library path first')
+        row = parent.row()
         row.prop(addon_prefs, 'lib_path', text = 'Library path')
+
     else:
         col = parent.column()
         td,tt =os.path.splitdrive(addon_prefs.thumb_path)
@@ -164,9 +167,15 @@ def upload_settings(self, context,parent,addon_prefs):
         if addon_prefs.enable_custom_thumnail_path:
             row.prop(addon_prefs, 'thumb_path', text = 'Asset preview folder path')
         else:
-            upload_path = os.path.join(addon_prefs.lib_path,UPLOAD_LIB)
-            addon_info.ensure_thumbnail_folder_exists(addon_prefs,upload_path)
-            col.label(text=f'Thumbnail Path: {thumbs_path}' )
+            blend_dir = os.path.dirname(bpy.data.filepath)
+            if bpy.data.filepath:
+                addon_prefs.thumb_path = blend_dir
+                row.label(text="Current file is used to save renders:")
+                row = col.row(align=True)
+                row.label(text=addon_prefs.thumb_path)
+            else:
+                row.label(text=" please save your file first")
+            
 
 
 class UB_PT_AssetManager_UIList(bpy.types.Panel,AssetManager_settings):
