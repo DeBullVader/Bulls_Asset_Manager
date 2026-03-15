@@ -4,11 +4,22 @@ Things to clean up before releasing the addon to end users.
 
 ---
 
-## Remove Debug Print Statements
+## Convert Debug Prints to `addon_logger.debug()`
 
-These `print()` calls were added during development for debugging. They log
-sensitive session info (usernames, token state, API responses) to the terminal
-and should be removed before publishing.
+Do **not** use a DEBUG flag — the addon is open source so any user could flip it.
+Instead, convert each `print()` call to `addon_logger.debug(...)`. The logger
+level is `WARNING` in production so debug messages are silently suppressed with
+no code visible to end users. A user can only expose their own data to themselves
+by lowering the level, which is not a security concern.
+
+**How to convert:**
+```python
+# before
+print("[MARKETPLACE] Token exchange response: ...")
+
+# after
+addon_logger.debug("Token exchange response: ...")
+```
 
 ### `__init__.py`
 - [ ] Line ~108: `print(f"[BullTools] Bulls Asset Manager v... loaded")`
