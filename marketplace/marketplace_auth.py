@@ -21,7 +21,6 @@ import threading
 import secrets
 import webbrowser
 import socket
-import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from datetime import datetime
@@ -31,6 +30,45 @@ from ..utils import addon_info
 from .marketplace_api import MarketplaceAPI
 
 import bpy.utils
+
+
+# ── Session token cache ───────────────────────────────────────────────────────
+# bpy.app.driver_namespace survives addon module reloads within a Blender
+# session. We cache the token there so dev-workflow reloads stay logged in.
+# At a real Blender restart userpref.blend is read, so this is only needed
+# for the VSCode "Reload Addons" development flow.
+
+_SESSION_KEY = "_polyassetvault_token"
+
+
+def _cache_token_in_session(prefs):
+    bpy.app.driver_namespace[_SESSION_KEY] = {
+        "deviceToken": prefs.addon_device_token,
+        "expiresAt":   prefs.addon_token_expires,
+        "username":    prefs.addon_username,
+        "userId":      prefs.addon_user_id,
+    }
+
+
+def _restore_token_from_session():
+    cached = bpy.app.driver_namespace.get(_SESSION_KEY, {})
+    if not cached.get("deviceToken"):
+        return
+    try:
+        prefs = addon_info.get_addon_prefs()
+        if prefs.addon_device_token:
+            return  # prefs already loaded (e.g. real Blender startup)
+        prefs.addon_device_token = cached["deviceToken"]
+        prefs.addon_token_expires = cached["expiresAt"]
+        prefs.addon_username      = cached["username"]
+        prefs.addon_user_id       = cached["userId"]
+        print(f"[MARKETPLACE] Token restored from session cache for: {prefs.addon_username}")
+    except Exception as e:
+        addon_logger.error(f"Failed to restore token from session cache: {e}")
+
+
+def _clear_session_cache():
+    bpy.app.driver_namespace.pop(_SESSION_KEY, None)
 
 
 # ── Shared auth state (written by server thread, read by modal operator) ──────
@@ -216,6 +254,7 @@ def exchange_and_save_token(jwt: str) -> tuple[bool, str]:
         prefs.addon_token_expires = data.get("expiresAt", "")
         prefs.addon_username = data.get("username", "")
         prefs.addon_user_id = str(data.get("userId", ""))
+        _cache_token_in_session(prefs)
         bpy.ops.wm.save_userpref()
 
         print(f"[MARKETPLACE] Logged in as: {prefs.addon_username}")
@@ -243,6 +282,7 @@ def logout() -> tuple[bool, str]:
         prefs.addon_token_expires = ""
         prefs.addon_username = ""
         prefs.addon_user_id = ""
+        _clear_session_cache()
         bpy.ops.wm.save_userpref()
 
         addon_logger.info("Logged out of PolyAssetVault")
@@ -280,7 +320,7 @@ def clear_token_if_invalid(ok: bool, data: dict) -> bool:
             prefs.addon_token_expires = ""
             prefs.addon_username = ""
             prefs.addon_user_id = ""
-            _clear_token_file()
+            _clear_session_cache()
             bpy.ops.wm.save_userpref()
             addon_logger.info("Token cleared after server rejected it.")
         except Exception:
@@ -445,6 +485,7 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    _restore_token_from_session()
 
 
 def unregister():
