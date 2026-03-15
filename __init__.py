@@ -104,8 +104,9 @@ packages=[
     marketplace,
 ]
 
+print(f"[BullTools] Bulls Asset Manager v{'.'.join(str(x) for x in bl_info['version'])} loaded")
+
 def register():
-  print(f"[BullTools] Bulls Asset Manager v{'.'.join(str(x) for x in bl_info['version'])} loaded")
   addon_updater_ops.register(bl_info)
   addon_updater_ops.make_annotations(AddonUpdate)
   for cls in classes:
