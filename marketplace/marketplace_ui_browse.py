@@ -12,6 +12,7 @@ import threading
 from bpy.utils import register_classes_factory
 
 from ..utils.addon_logger import addon_logger
+from ..utils import addon_info
 from . import marketplace_auth
 from .marketplace_download import is_downloading
 
@@ -156,15 +157,24 @@ class UB_PT_MarketplaceBrowse(bpy.types.Panel):
                 row = box.row(align=True)
                 icon = 'CHECKMARK' if owned else 'ASSET_MANAGER'
                 row.label(text=product_name, icon=icon)
-                dl_op = row.operator(
-                    "ub.marketplace_download",
-                    text="",
-                    icon='IMPORT',
-                )
-                dl_op.product_id = product_id
-                dl_op.product_name = product_name
-                # Only allow download for owned products; disable if another is in progress
-                row.enabled = owned and not dl_active
+
+                if owned:
+                    dl_op = row.operator(
+                        "ub.marketplace_download",
+                        text="",
+                        icon='IMPORT',
+                    )
+                    dl_op.product_id = product_id
+                    dl_op.product_name = product_name
+                    if dl_active:
+                        row.enabled = False
+                else:
+                    # Build the product page URL from shortName or id
+                    short_name = product.get("shortName", product.get("slug", product_id))
+                    prefs = addon_info.get_addon_prefs()
+                    product_url = prefs.marketplace_api_url.rstrip("/") + "/products/" + short_name
+                    buy_op = row.operator("bu.url_open", text="Purchase", icon='URL')
+                    buy_op.url = product_url
 
         # ── Pagination ─────────────────────────────────────────────────────
         page = cache.get("page", 1)
