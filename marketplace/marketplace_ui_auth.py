@@ -18,7 +18,14 @@ from . import marketplace_auth
 
 # Verify the stored token against the server once at startup (non-blocking)
 def _verify_on_startup():
-    marketplace_auth.verify_token_with_server()
+    from ..utils import addon_info
+    prefs = addon_info.get_addon_prefs()
+    token = prefs.addon_device_token
+    expires = prefs.addon_token_expires
+    username = prefs.addon_username
+    print(f"[MARKETPLACE] Startup check — token present: {bool(token)}, expires: {expires!r}, username: {username!r}")
+    result = marketplace_auth.verify_token_with_server()
+    print(f"[MARKETPLACE] Startup verify result: {result}, still logged in: {marketplace_auth.is_logged_in()}")
 
 def _start_startup_check():
     t = threading.Thread(target=_verify_on_startup, daemon=True)
